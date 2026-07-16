@@ -1,11 +1,12 @@
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { PRODUCTS, Product } from '@/constants/products';
+import { Product } from '@/constants/products';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useProducts } from '@/hooks/use-products';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Dimensions, FlatList, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Dimensions, FlatList, Platform, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -13,6 +14,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
+  const { products, loading, error, refetch } = useProducts();
 
   const categories = [
     { id: 'all', name: 'ทั้งหมด', icon: 'bag.fill' },
@@ -21,7 +23,7 @@ export default function HomeScreen() {
     { id: 'crispy', name: 'กากหมู/กรอบ', icon: 'star.fill' },
   ];
 
-  const featuredProducts = PRODUCTS.slice(0, 3); // Top 3 featured items
+  const featuredProducts = products.slice(0, 3); // Top 3 featured items
 
   const renderProductItem = ({ item }: { item: Product }) => (
     <TouchableOpacity
@@ -52,6 +54,32 @@ export default function HomeScreen() {
       </View>
     </TouchableOpacity>
   );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <View style={styles.centerState}>
+          <ActivityIndicator size="large" color={themeColors.tint} />
+          <Text style={[styles.stateText, { color: themeColors.icon }]}>กำลังโหลดสินค้า...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <View style={styles.centerState}>
+          <IconSymbol name="wifi.slash" size={48} color={themeColors.icon} />
+          <Text style={[styles.stateText, { color: themeColors.text }]}>โหลดข้อมูลไม่สำเร็จ</Text>
+          <Text style={[styles.stateSubText, { color: themeColors.icon }]}>{error}</Text>
+          <TouchableOpacity style={[styles.retryBtn, { backgroundColor: themeColors.tint }]} onPress={refetch}>
+            <Text style={styles.retryBtnText}>ลองใหม่อีกครั้ง</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -138,6 +166,33 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  centerState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 32,
+  },
+  stateText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  stateSubText: {
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  retryBtn: {
+    marginTop: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 24,
+  },
+  retryBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
   container: {
     flex: 1,
   },

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Platform } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Platform } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -10,7 +10,7 @@ export default function CheckoutScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
-  
+
   const { cartItems, cartTotal, deliveryFee, promoDiscount, clearCart } = useCart();
 
   // Form states
@@ -64,7 +64,7 @@ export default function CheckoutScreen() {
             </View>
           ))}
           <View style={[styles.divider, { backgroundColor: themeColors.border }]} />
-          
+
           <View style={styles.summaryRow}>
             <Text style={[styles.summaryLabel, { color: themeColors.icon }]}>ยอดรวมสินค้า</Text>
             <Text style={[styles.summaryVal, { color: themeColors.text }]}>฿{subtotal}</Text>
@@ -90,7 +90,7 @@ export default function CheckoutScreen() {
         {/* Shipping Address Form */}
         <View style={[styles.card, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
           <Text style={[styles.sectionTitle, { color: themeColors.text }]}>ข้อมูลจัดส่ง</Text>
-          
+
           <Text style={[styles.inputLabel, { color: themeColors.text }]}>ชื่อผู้รับ</Text>
           <TextInput
             style={[styles.input, { backgroundColor: themeColors.background, color: themeColors.text, borderColor: themeColors.border }]}
@@ -125,7 +125,7 @@ export default function CheckoutScreen() {
         {/* Payment Methods */}
         <View style={[styles.card, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
           <Text style={[styles.sectionTitle, { color: themeColors.text }]}>ช่องทางการชำระเงิน</Text>
-          
+
           {/* COD */}
           <TouchableOpacity
             style={[

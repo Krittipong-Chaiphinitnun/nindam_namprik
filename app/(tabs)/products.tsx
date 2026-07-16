@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, FlatList, TextInput, TouchableOpacity, SafeAreaView, Dimensions, Platform, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, FlatList, TextInput, TouchableOpacity, SafeAreaView, Dimensions, Platform, ScrollView, ActivityIndicator } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
-import { PRODUCTS, Product } from '@/constants/products';
+import { Product } from '@/constants/products';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useProducts } from '@/hooks/use-products';
 
 const { width } = Dimensions.get('window');
 
@@ -14,6 +15,7 @@ export default function ProductsShowcaseScreen() {
   const params = useLocalSearchParams<{ category?: string }>();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
+  const { products, loading, error, refetch } = useProducts();
 
   // Filters state
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,7 +38,7 @@ export default function ProductsShowcaseScreen() {
   ];
 
   // Process list
-  const filteredProducts = PRODUCTS.filter(product => {
+  const filteredProducts = products.filter(product => {
     const matchesSearch =
       product.thaiName.includes(searchQuery) ||
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -59,7 +61,7 @@ export default function ProductsShowcaseScreen() {
         style={[styles.gridCard, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}
         onPress={() => router.push(`/product/${item.id}` as any)}>
         <Image source={{ uri: item.image }} style={styles.cardImage} contentFit="cover" />
-        
+
         {/* Hot badge based on spice level */}
         {item.spicyLevel >= 4 && (
           <View style={styles.spicyBadge}>
@@ -98,6 +100,32 @@ export default function ProductsShowcaseScreen() {
       </TouchableOpacity>
     );
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <View style={styles.centerState}>
+          <ActivityIndicator size="large" color={themeColors.tint} />
+          <Text style={[styles.stateText, { color: themeColors.icon }]}>กำลังโหลดสินค้า...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <View style={styles.centerState}>
+          <IconSymbol name="wifi.slash" size={48} color={themeColors.icon} />
+          <Text style={[styles.stateText, { color: themeColors.text }]}>โหลดข้อมูลไม่สำเร็จ</Text>
+          <Text style={[styles.stateSubText, { color: themeColors.icon }]}>{error}</Text>
+          <TouchableOpacity style={[styles.retryBtn, { backgroundColor: themeColors.tint }]} onPress={refetch}>
+            <Text style={styles.retryBtnText}>ลองใหม่อีกครั้ง</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
@@ -193,6 +221,33 @@ export default function ProductsShowcaseScreen() {
 }
 
 const styles = StyleSheet.create({
+  centerState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 32,
+  },
+  stateText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  stateSubText: {
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  retryBtn: {
+    marginTop: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 24,
+  },
+  retryBtnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
   container: {
     flex: 1,
   },

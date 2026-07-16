@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, View, Text, TouchableOpacity, SafeAreaView, Dimensions, Platform } from 'react-native';
+import { StyleSheet, ScrollView, View, Text, TouchableOpacity, SafeAreaView, Dimensions, Platform, ActivityIndicator } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { PRODUCTS } from '@/constants/products';
+import { Product } from '@/constants/products';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useCart } from '@/context/CartContext';
+import { useProducts } from '@/hooks/use-products';
 
 const { width } = Dimensions.get('window');
 
@@ -16,11 +17,37 @@ export default function ProductDetailScreen() {
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
   const { addToCart } = useCart();
+  const { products, loading, error, refetch } = useProducts();
 
-  const product = PRODUCTS.find(p => p.id === id);
+  const product = products.find(p => p.id === id);
   const [selectedWeight, setSelectedWeight] = useState(product?.weightOptions[0]?.label || '');
   const [quantity, setQuantity] = useState(1);
-  
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <View style={styles.notFound}>
+          <ActivityIndicator size="large" color={themeColors.tint} />
+          <Text style={{ color: themeColors.icon, fontSize: 16 }}>กำลังโหลดข้อมูลสินค้า...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <View style={styles.notFound}>
+          <IconSymbol name="wifi.slash" size={48} color={themeColors.icon} />
+          <Text style={{ color: themeColors.text, fontSize: 18 }}>โหลดข้อมูลไม่สำเร็จ</Text>
+          <TouchableOpacity style={styles.backBtn} onPress={refetch}>
+            <Text style={{ color: '#fff' }}>ลองใหม่อีกครั้ง</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (!product) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>

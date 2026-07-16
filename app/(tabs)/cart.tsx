@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, View, Text, TextInput, TouchableOpacity, SafeAreaView, Platform } from 'react-native';
+import { StyleSheet, ScrollView, View, Text, TextInput, TouchableOpacity, SafeAreaView, Platform } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Colors } from '@/constants/theme';
@@ -11,7 +11,7 @@ export default function CartScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
-  
+
   const {
     cartItems,
     updateQuantity,
@@ -42,13 +42,13 @@ export default function CartScreen() {
     return (
       <View key={`${item.id}-${item.selectedWeight}`} style={[styles.itemCard, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
         <Image source={{ uri: item.image }} style={styles.itemImage} contentFit="cover" />
-        
+
         <View style={styles.itemContent}>
           <Text style={[styles.itemTitle, { color: themeColors.text }]} numberOfLines={1}>
             {item.thaiName}
           </Text>
           <Text style={[styles.itemWeight, { color: themeColors.icon }]}>ขนาด: {item.selectedWeight}</Text>
-          
+
           <View style={styles.qtyRow}>
             {/* Quantity Controller */}
             <View style={[styles.qtySelector, { borderColor: themeColors.border }]}>
@@ -138,7 +138,7 @@ export default function CartScreen() {
         {/* Price calculation block */}
         <View style={[styles.summaryCard, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
           <Text style={[styles.cardTitle, { color: themeColors.text }]}>สรุปยอดรวม</Text>
-          
+
           <View style={styles.summaryRow}>
             <Text style={[styles.summaryLabel, { color: themeColors.icon }]}>ยอดรวมสินค้า</Text>
             <Text style={[styles.summaryValue, { color: themeColors.text }]}>฿{subtotal}</Text>
