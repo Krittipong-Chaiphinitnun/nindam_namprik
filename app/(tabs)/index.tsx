@@ -124,7 +124,7 @@ export default function HomeScreen() {
         <View style={[styles.storyCard, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
           <View style={styles.storyHeader}>
             <IconSymbol name="info.circle.fill" size={20} color={themeColors.tint} style={{ marginRight: 8 }} />
-            <Text style={[styles.storyTitle, { color: themeColors.text }]}>ตำนานครกหินกรูดทำมือ</Text>
+            <Text style={[styles.storyTitle, { color: themeColors.text }]}>กรรมวิธีการผลิตน้ำพริกคุณน้า</Text>
           </View>
           <Text style={[styles.storyContent, { color: themeColors.icon }]}>
             น้ำพริกของเราทุกกระปุกต้มเคี่ยว คั่วและโขลกด้วยฝีมือคุณน้าอย่างตั้งใจ
