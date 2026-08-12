@@ -48,33 +48,45 @@ export default function AdminScreen() {
 
   const handleDelete = (product: Product) => {
     if (!product || !product.id) {
-      Alert.alert('❌ ผิดพลาด', 'ไม่พบ ID ของสินค้า (เป็น undefined หรือ null)');
+      const msg = 'ไม่พบ ID ของสินค้า (เป็น undefined หรือ null)';
+      Platform.OS === 'web' ? window.alert(msg) : Alert.alert('❌ ผิดพลาด', msg);
       return;
     }
 
-    Alert.alert(
-      '🗑️ ลบสินค้า',
-      `คุณต้องการลบ "${product.thaiName || product.name}" ใช่ไหม?\nการกระทำนี้ไม่สามารถย้อนกลับได้`,
-      [
+    const confirmMessage = `คุณต้องการลบ "${product.thaiName || product.name}" ใช่ไหม?\nการกระทำนี้ไม่สามารถย้อนกลับได้`;
+
+    // 🌐 กรณีรันบน WEB BROWSER
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(confirmMessage);
+      if (confirmed) {
+        executeDelete(product);
+      }
+    } else {
+      // 📱 กรณีรันบน iOS / Android
+      Alert.alert('🗑️ ลบสินค้า', confirmMessage, [
         { text: 'ยกเลิก', style: 'cancel' },
         {
           text: 'ลบเลย',
           style: 'destructive',
-          onPress: async () => {
-            console.log('Confirmed delete ID:', product.id);
-            const result = await deleteProduct(product.id);
-
-            // เช็กค่าจาก result.success ที่ได้จาก useProductMutations
-            if (result && result.success) {
-              Alert.alert('✅ สำเร็จ', `ลบ "${product.thaiName || product.name}" เรียบร้อยแล้ว`);
-              refetch(); // โหลดรายการสินค้าใหม่ทันที
-            } else {
-              Alert.alert('❌ ผิดพลาด', result?.error || 'ไม่สามารถลบสินค้าได้');
-            }
-          },
+          onPress: () => executeDelete(product),
         },
-      ],
-    );
+      ]);
+    }
+  };
+
+  // ฟังก์ชันสั่งลบแยกเพื่อเรียกใช้ร่วมกันระหว่าง Web และ Native
+  const executeDelete = async (product: Product) => {
+    console.log('Confirmed delete ID:', product.id);
+    const result = await deleteProduct(product.id);
+
+    if (result && result.success) {
+      const successMsg = `ลบ "${product.thaiName || product.name}" เรียบร้อยแล้ว`;
+      Platform.OS === 'web' ? window.alert(successMsg) : Alert.alert('✅ สำเร็จ', successMsg);
+      refetch();
+    } else {
+      const errorMsg = result?.error || 'ไม่สามารถลบสินค้าได้';
+      Platform.OS === 'web' ? window.alert(errorMsg) : Alert.alert('❌ ผิดพลาด', errorMsg);
+    }
   };
 
   const handleSubmit = async (data: ProductPayload) => {
