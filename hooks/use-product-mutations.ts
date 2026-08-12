@@ -3,7 +3,7 @@ import { useState } from 'react';
 const BASE_URL = 'http://119.59.102.161:3006/api/products';
 
 export interface ProductPayload {
-  id?: string;
+  id?: string | number;
   name: string;
   thai_name: string;
   price: number;
@@ -45,9 +45,9 @@ export function useProductMutations() {
     run(async () => {
       const res = await fetch(BASE_URL, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json; charset=utf-8',
-          'Accept': 'application/json' 
+          'Accept': 'application/json'
         },
         body: JSON.stringify(data),
       });
@@ -56,11 +56,11 @@ export function useProductMutations() {
     });
 
   /** PUT /api/products/:id */
-  const updateProduct = (id: string, data: Partial<ProductPayload>) =>
+  const updateProduct = (id: string | number, data: Partial<ProductPayload>) =>
     run(async () => {
       const res = await fetch(`${BASE_URL}/${id}`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Accept': 'application/json'
         },
@@ -71,30 +71,31 @@ export function useProductMutations() {
     });
 
   /** DELETE /api/products/:id */
-  const deleteProduct = async (id: string) => {
+  const deleteProduct = async (id: string | number) => {
     setState({ loading: true, error: null });
-    console.log('Payload for DELETE:', id);
+    console.log('Sending DELETE request for ID:', id);
     try {
-      const res = await fetch(`${BASE_URL}/${encodeURIComponent(id)}`, { 
+      const res = await fetch(`${BASE_URL}/${id}`, {
         method: 'DELETE',
         headers: { 'Accept': 'application/json' }
       });
-      
+
+      const resData = await res.json().catch(() => ({}));
+
       if (!res.ok) {
-        const errText = await res.text().catch(() => '');
-        const msg = `ลบไม่สำเร็จ HTTP ${res.status}: ${errText}`;
-        console.error(`[DELETE] Server error: ${msg}`);
+        const msg = resData.message || `ลบไม่สำเร็จ (HTTP ${res.status})`;
+        console.error(`[DELETE] Server error:`, msg);
         setState({ loading: false, error: msg });
-        return { error: msg };
+        return { success: false, error: msg };
       }
-      
+
       setState({ loading: false, error: null });
-      return { success: true };
+      return { success: true, data: resData };
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการเชื่อมต่อ';
       console.error('[DELETE] Exception:', err);
       setState({ loading: false, error: msg });
-      return { error: msg };
+      return { success: false, error: msg };
     }
   };
 

@@ -47,26 +47,29 @@ export default function AdminScreen() {
   };
 
   const handleDelete = (product: Product) => {
+    if (!product || !product.id) {
+      Alert.alert('❌ ผิดพลาด', 'ไม่พบ ID ของสินค้า (เป็น undefined หรือ null)');
+      return;
+    }
+
     Alert.alert(
       '🗑️ ลบสินค้า',
-      `คุณต้องการลบ "${product.thaiName}" ใช่ไหม?\nการกระทำนี้ไม่สามารถย้อนกลับได้`,
+      `คุณต้องการลบ "${product.thaiName || product.name}" ใช่ไหม?\nการกระทำนี้ไม่สามารถย้อนกลับได้`,
       [
         { text: 'ยกเลิก', style: 'cancel' },
         {
           text: 'ลบเลย',
           style: 'destructive',
           onPress: async () => {
-            console.log('Deleting ID:', product.id);
-            if (!product.id) {
-              Alert.alert('❌ ผิดพลาด', 'ไม่พบ ID ของสินค้า (เป็น undefined หรือ null)');
-              return;
-            }
+            console.log('Confirmed delete ID:', product.id);
             const result = await deleteProduct(product.id);
-            if (result !== null) {
-              Alert.alert('✅ สำเร็จ', `ลบ "${product.thaiName}" เรียบร้อยแล้ว`);
-              refetch();
+
+            // เช็กค่าจาก result.success ที่ได้จาก useProductMutations
+            if (result && result.success) {
+              Alert.alert('✅ สำเร็จ', `ลบ "${product.thaiName || product.name}" เรียบร้อยแล้ว`);
+              refetch(); // โหลดรายการสินค้าใหม่ทันที
             } else {
-              Alert.alert('❌ ผิดพลาด', 'ไม่สามารถลบสินค้าได้ กรุณาลองใหม่');
+              Alert.alert('❌ ผิดพลาด', result?.error || 'ไม่สามารถลบสินค้าได้');
             }
           },
         },
@@ -191,7 +194,7 @@ export default function AdminScreen() {
         <FlatList
           data={products}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
@@ -209,7 +212,7 @@ export default function AdminScreen() {
         <View style={styles.overlay}>
           <View style={[styles.overlayBox, { backgroundColor: c.card }]}>
             <ActivityIndicator size="large" color={c.tint} />
-            <Text style={[styles.overlayText, { color: c.text }]}>กำลังบันทึก...</Text>
+            <Text style={[styles.overlayText, { color: c.text }]}>กำลังดำเนินการ...</Text>
           </View>
         </View>
       )}
@@ -231,7 +234,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyInBetween: 'space-between',
     paddingHorizontal: 18,
     paddingTop: Platform.OS === 'ios' ? 10 : 20,
     paddingBottom: 14,
