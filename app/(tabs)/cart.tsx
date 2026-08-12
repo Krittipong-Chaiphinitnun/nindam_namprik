@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, View, Text, TextInput, TouchableOpacity, SafeAreaView, Platform } from 'react-native-safe-area-context';
+import { StyleSheet, ScrollView, View, Text, TextInput, TouchableOpacity, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Colors } from '@/constants/theme';

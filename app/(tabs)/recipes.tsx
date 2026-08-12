@@ -3,7 +3,8 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Image } from 'expo-image';
 import React from 'react';
-import { Platform, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native-safe-area-context';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 interface Recipe {
   id: string;

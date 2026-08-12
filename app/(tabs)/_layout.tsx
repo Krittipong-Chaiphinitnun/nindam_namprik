@@ -61,6 +61,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={26} name="book.closed.fill" color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="admin"
+        options={{
+          title: 'จัดการ',
+          tabBarIcon: ({ color }) => <IconSymbol size={26} name="gearshape.fill" color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

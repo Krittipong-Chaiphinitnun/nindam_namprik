@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, View, Text, TouchableOpacity, SafeAreaView, Dimensions, Platform, ActivityIndicator } from 'react-native-safe-area-context';
+import { StyleSheet, ScrollView, View, Text, TouchableOpacity, Dimensions, Platform, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { Product } from '@/constants/products';
@@ -61,7 +62,7 @@ export default function ProductDetailScreen() {
     );
   }
 
-  const selectedOption = product.weightOptions.find(o => o.label === selectedWeight) || product.weightOptions[0];
+  const selectedOption = product.weightOptions?.find(o => o.label === selectedWeight) || product.weightOptions?.[0] || { label: 'ขนาดมาตรฐาน', price: product.price };
   const currentPrice = selectedOption.price;
 
   const handleAddToCart = () => {
@@ -142,7 +143,7 @@ export default function ProductDetailScreen() {
           {/* Sizing Selector */}
           <Text style={[styles.sectionTitle, { color: themeColors.text, marginTop: 20 }]}>เลือกขนาดกระปุก</Text>
           <View style={styles.weightRow}>
-            {product.weightOptions.map(option => {
+            {(product.weightOptions || []).map(option => {
               const isSelected = selectedWeight === option.label;
               return (
                 <TouchableOpacity
@@ -169,7 +170,7 @@ export default function ProductDetailScreen() {
           {/* Ingredients */}
           <Text style={[styles.sectionTitle, { color: themeColors.text, marginTop: 20 }]}>ส่วนประกอบสำคัญ</Text>
           <View style={styles.ingredientsRow}>
-            {product.ingredients.map((ing, idx) => (
+            {(product.ingredients || []).map((ing, idx) => (
               <View key={idx} style={[styles.ingredientChip, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
                 <Text style={[styles.ingredientText, { color: themeColors.text }]}>{ing}</Text>
               </View>

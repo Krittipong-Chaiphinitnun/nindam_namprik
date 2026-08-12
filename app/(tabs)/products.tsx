@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, FlatList, TextInput, TouchableOpacity, SafeAreaView, Dimensions, Platform, ScrollView, ActivityIndicator } from 'react-native-safe-area-context';
+import { StyleSheet, View, Text, FlatList, TextInput, TouchableOpacity, Dimensions, Platform, ScrollView, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { Product } from '@/constants/products';
