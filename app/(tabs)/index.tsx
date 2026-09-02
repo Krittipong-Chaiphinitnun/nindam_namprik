@@ -28,10 +28,11 @@ export default function HomeScreen() {
     { id: 'crispy', name: 'กากหมู/กรอบ', icon: 'star.fill' },
   ];
 
-  // Filter products by searchQuery without altering original hook/fetch logic
+  // Filter available products (stock > 0) by searchQuery without altering original hook/fetch logic
+  const availableProducts = products.filter(p => (p.stock ?? 20) > 0);
   const filteredProducts = searchQuery.trim() === ''
-    ? products
-    : products.filter(p =>
+    ? availableProducts
+    : availableProducts.filter(p =>
         p.thaiName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.description.toLowerCase().includes(searchQuery.toLowerCase())

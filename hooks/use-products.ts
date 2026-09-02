@@ -11,12 +11,13 @@ interface ApiProduct {
   price: string | number;
   category: 'dry' | 'wet' | 'crispy' | 'mild';
   description: string;
-  long_description: string;
+  long_description?: string;
   spicy_level: number;
-  rating: string | number;
-  reviews_count: number;
-  ingredients?: string[];
-  weight_options?: { label: string; price: number }[];
+  rating?: string | number;
+  reviews_count?: number;
+  stock?: number;
+  ingredients?: string[] | string;
+  weight_options?: { label: string; price: number }[] | string;
   image: string;
 }
 
@@ -27,20 +28,56 @@ interface ApiResponse {
 
 /** Map API snake_case shape → app Product interface */
 function mapApiProduct(item: ApiProduct): Product {
+  let parsedIngredients: string[] = [];
+  if (Array.isArray(item.ingredients)) {
+    parsedIngredients = item.ingredients;
+  } else if (typeof item.ingredients === 'string' && item.ingredients.trim()) {
+    try {
+      parsedIngredients = JSON.parse(item.ingredients);
+    } catch {
+      parsedIngredients = item.ingredients.split(',').map(s => s.trim());
+    }
+  }
+  if (!parsedIngredients || parsedIngredients.length === 0) {
+    parsedIngredients = ['พริกสด 40%', 'กระเทียมไทย 25%', 'หอมแดงจี่ 20%', 'เครื่องปรุงรส 15%'];
+  }
+
+  let parsedWeightOptions: { label: string; price: number }[] = [];
+  if (Array.isArray(item.weight_options)) {
+    parsedWeightOptions = item.weight_options;
+  } else if (typeof item.weight_options === 'string' && item.weight_options.trim()) {
+    try {
+      parsedWeightOptions = JSON.parse(item.weight_options);
+    } catch {
+      parsedWeightOptions = [];
+    }
+  }
+  const basePrice = Number(item.price || 0);
+  if (!parsedWeightOptions || parsedWeightOptions.length === 0) {
+    parsedWeightOptions = [
+      { label: '150g', price: basePrice },
+      { label: '300g', price: Math.round(basePrice * 1.8) || basePrice },
+    ];
+  }
+
   return {
-    id: item.id,
-    name: item.name,
-    thaiName: item.thai_name,
-    price: Number(item.price),
-    category: item.category,
-    description: item.description,
-    longDescription: item.long_description,
-    spicyLevel: item.spicy_level,
-    rating: Number(item.rating),
-    reviewsCount: item.reviews_count,
-    ingredients: item.ingredients ?? [],
-    weightOptions: item.weight_options ?? [],
-    image: item.image,
+    id: String(item.id),
+    name: item.name || item.thai_name || 'Namprik',
+    thaiName: item.thai_name || item.name || 'น้ำพริกคุณน้า',
+    price: basePrice,
+    category: item.category || 'wet',
+    description: item.description || 'น้ำพริกสูตรเด็ด รสชาติเผ็ดแซ่บกลมกล่อม',
+    longDescription:
+      item.long_description ||
+      item.description ||
+      'น้ำพริกคุณน้าสูตรโบราณ คัดสรรวัตถุดิบคุณภาพสูงส่งตรงจากชุมชน เผ็ดแท้จากพริกสวน ไม่ใส่สารกันบูด คลุกข้าวสวยร้อนๆ อร่อยแซ่บลงตัวที่สุด',
+    spicyLevel: Number(item.spicy_level ?? 3),
+    rating: Number(item.rating ?? 4.8),
+    reviewsCount: Number(item.reviews_count ?? 12),
+    stock: Number(item.stock ?? 20),
+    ingredients: parsedIngredients,
+    weightOptions: parsedWeightOptions,
+    image: item.image || 'https://aroifin.com/wp-content/uploads/2025/09/11092025-pork-crackling-chilli-paste-cover.webp',
   };
 }
 

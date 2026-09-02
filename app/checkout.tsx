@@ -7,12 +7,16 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { useProducts } from '@/hooks/use-products';
+
+const ORDERS_API_URL = 'http://119.59.102.161:3006/api/orders';
 
 export default function CheckoutScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
   const { isLoggedIn } = useAuth();
+  const { refetch } = useProducts();
 
   const { cartItems, cartTotal, deliveryFee, promoDiscount, clearCart } = useCart();
 
@@ -24,7 +28,7 @@ export default function CheckoutScreen() {
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!isLoggedIn) {
       const alertMsg = 'กรุณาเข้าสู่ระบบก่อนทำการสั่งซื้อ';
       if (Platform.OS === 'web') {
@@ -52,8 +56,30 @@ export default function CheckoutScreen() {
       return;
     }
 
+    // 📦 เรียก API ตัด Stock ผ่าน POST /api/orders
+    try {
+      const orderItems = cartItems.map(item => ({
+        product_id: String(item.id),
+        quantity: item.quantity,
+      }));
+
+      const res = await fetch(ORDERS_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ items: orderItems }),
+      });
+
+      const data = await res.json();
+      if (!data.success) {
+        console.warn('Order stock deduction partial failure:', data);
+      }
+    } catch (err) {
+      console.error('Order API Error:', err);
+    }
+
     // Success flow
     clearCart();
+    refetch();
     router.replace('/order-success' as any);
   };
 

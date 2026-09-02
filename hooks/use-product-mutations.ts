@@ -13,6 +13,7 @@ export interface ProductPayload {
   spicy_level: number;
   rating?: number;
   reviews_count?: number;
+  stock?: number;
   image: string;
   ingredients?: string[];
   weight_options?: { label: string; price: number }[];

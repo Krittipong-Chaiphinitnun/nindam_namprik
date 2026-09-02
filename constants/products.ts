@@ -1,3 +1,11 @@
+export interface ProductReview {
+  id: string;
+  username: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -8,10 +16,12 @@ export interface Product {
   spicyLevel: number; // 1 to 5
   rating: number;
   reviewsCount: number;
+  stock: number;
   ingredients: string[];
   weightOptions: { label: string; price: number }[];
-  image: string; // Will use high-quality Unsplash food URLs to guarantee beautiful, high-res presentation
+  image: string;
   category: 'dry' | 'wet' | 'crispy' | 'mild';
+  reviews?: ProductReview[];
 }
 
 export const PRODUCTS: Product[] = [

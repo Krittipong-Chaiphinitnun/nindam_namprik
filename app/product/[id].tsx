@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, View, Text, TouchableOpacity, Dimensions, Platform, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, ScrollView, View, Text, TextInput, TouchableOpacity, Dimensions, Platform, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import { Product } from '@/constants/products';
+import { Product, ProductReview } from '@/constants/products';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -20,11 +20,61 @@ export default function ProductDetailScreen() {
   const themeColors = Colors[colorScheme ?? 'light'];
   const { addToCart } = useCart();
   const { products, loading, error, refetch } = useProducts();
-  const { isLoggedIn } = useAuth();
+  const { user, isLoggedIn } = useAuth();
 
   const product = products.find(p => p.id === id);
   const [selectedWeight, setSelectedWeight] = useState(product?.weightOptions[0]?.label || '');
   const [quantity, setQuantity] = useState(1);
+
+  // Reviews state
+  const [reviews, setReviews] = useState<ProductReview[]>([
+    {
+      id: 'rev1',
+      username: 'คุณสมชาย สายแซ่บ',
+      rating: 5,
+      comment: 'หอมพริกคั่วมากครับ รสชาติจัดจ้าน ทานกับไข่ต้มอร่อยสุดๆ!',
+      date: '2026-08-28',
+    },
+    {
+      id: 'rev2',
+      username: 'แม่ครัวเมืองเหนือ',
+      rating: 5,
+      comment: 'สูตรโบราณแท้ๆ รสชาติเหมือนที่คุณแม่ทำให้ทานตอนเด็กๆ เลยค่ะ',
+      date: '2026-08-30',
+    },
+  ]);
+  const [newRating, setNewRating] = useState(5);
+  const [newComment, setNewComment] = useState('');
+
+  const handleSubmitReview = () => {
+    if (!isLoggedIn) {
+      const msg = 'กรุณาเข้าสู่ระบบก่อนเขียนรีวิว';
+      Platform.OS === 'web' ? window.alert(msg) : Alert.alert('🔒 กรุณาเข้าสู่ระบบ', msg);
+      router.push('/login' as any);
+      return;
+    }
+
+    if (!newComment.trim()) {
+      const msg = 'กรุณากรอกข้อความรีวิว';
+      Platform.OS === 'web' ? window.alert(msg) : Alert.alert('ข้อความเตือน', msg);
+      return;
+    }
+
+    const newRev: ProductReview = {
+      id: `rev_${Date.now()}`,
+      username: user?.username || 'ผู้ใช้งาน',
+      rating: newRating,
+      comment: newComment.trim(),
+      date: new Date().toISOString().split('T')[0],
+    };
+
+    setReviews(prev => [newRev, ...prev]);
+    setNewComment('');
+    setNewRating(5);
+
+    const successMsg = 'ส่งรีวิวความแซ่บเรียบร้อยแล้ว ขอบคุณสำหรับคะแนนครับ! 🌶️';
+    Platform.OS === 'web' ? window.alert(successMsg) : Alert.alert('✅ สำเร็จ', successMsg);
+  };
 
   if (loading) {
     return (
@@ -205,6 +255,97 @@ export default function ProductDetailScreen() {
               </View>
             ))}
           </View>
+
+          {/* Stock Status Badge */}
+          <View style={styles.stockRow}>
+            <Text style={[styles.stockLabel, { color: themeColors.icon }]}>จำนวนสินค้าคงเหลือในคลัง:</Text>
+            <View style={[styles.stockBadge, { backgroundColor: (product.stock ?? 20) > 0 ? 'rgba(46, 125, 50, 0.1)' : 'rgba(255, 77, 77, 0.1)' }]}>
+              <Text style={[styles.stockBadgeText, { color: (product.stock ?? 20) > 0 ? '#2E7D32' : '#FF4D4D' }]}>
+                {(product.stock ?? 20) > 0 ? `📦 พร้อมส่ง ${product.stock} ชิ้น` : '❌ สินค้าหมดคลัง'}
+              </Text>
+            </View>
+          </View>
+
+          <View style={[styles.divider, { backgroundColor: themeColors.border }]} />
+
+          {/* Review & Rating Section */}
+          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+            รีวิวความแซ่บ ({reviews.length + (product.reviewsCount || 0)})
+          </Text>
+
+          {/* Add Review Form for Logged In Users */}
+          <View style={[styles.reviewFormCard, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
+            <Text style={[styles.reviewFormTitle, { color: themeColors.text }]}>⭐ เขียนรีวิวและให้คะแนนดาว</Text>
+
+            {/* Rating Star Picker */}
+            <View style={styles.starSelectRow}>
+              <Text style={[styles.metaText, { color: themeColors.icon }]}>ให้คะแนน:</Text>
+              <View style={styles.starBtnsRow}>
+                {[1, 2, 3, 4, 5].map(star => (
+                  <TouchableOpacity key={star} onPress={() => setNewRating(star)}>
+                    <IconSymbol
+                      name="star.fill"
+                      size={22}
+                      color={star <= newRating ? '#FFB800' : themeColors.tabIconDefault}
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Comment Input */}
+            <TextInput
+              style={[styles.reviewInput, { backgroundColor: themeColors.background, color: themeColors.text, borderColor: themeColors.border }]}
+              placeholder={isLoggedIn ? 'แบ่งปันความรู้สึกความแซ่บ...' : 'กรุณาเข้าสู่ระบบก่อนเขียนรีวิว...'}
+              placeholderTextColor={themeColors.icon}
+              value={newComment}
+              onChangeText={setNewComment}
+              multiline
+              numberOfLines={3}
+              editable={isLoggedIn}
+            />
+
+            {/* Submit Review Button */}
+            <TouchableOpacity
+              style={[
+                styles.submitReviewBtn,
+                { backgroundColor: isLoggedIn ? themeColors.tint : themeColors.icon }
+              ]}
+              onPress={handleSubmitReview}>
+              <IconSymbol name="paperplane.fill" size={14} color="#fff" style={{ marginRight: 6 }} />
+              <Text style={styles.submitReviewBtnText}>
+                {isLoggedIn ? 'ส่งรีวิวความแซ่บ' : 'เข้าสู่ระบบเพื่อเขียนรีวิว'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Reviews List */}
+          <View style={styles.reviewsList}>
+            {reviews.map(rev => (
+              <View key={rev.id} style={[styles.reviewCard, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
+                <View style={styles.reviewHeader}>
+                  <View style={styles.reviewUserCircle}>
+                    <Text style={styles.reviewUserInitial}>{rev.username.charAt(0)}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.reviewUsername, { color: themeColors.text }]}>{rev.username}</Text>
+                    <Text style={[styles.reviewDate, { color: themeColors.icon }]}>{rev.date}</Text>
+                  </View>
+                  <View style={styles.reviewStarsRow}>
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <IconSymbol
+                        key={star}
+                        name="star.fill"
+                        size={12}
+                        color={star <= rev.rating ? '#FFB800' : themeColors.tabIconDefault}
+                      />
+                    ))}
+                  </View>
+                </View>
+                <Text style={[styles.reviewComment, { color: themeColors.text }]}>{rev.comment}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </ScrollView>
 
@@ -226,9 +367,17 @@ export default function ProductDetailScreen() {
           </View>
 
           {/* Add To Cart */}
-          <TouchableOpacity style={[styles.addToCartBtn, { backgroundColor: themeColors.tint }]} onPress={handleAddToCart}>
+          <TouchableOpacity
+            style={[
+              styles.addToCartBtn,
+              { backgroundColor: (product.stock ?? 20) > 0 ? themeColors.tint : themeColors.icon }
+            ]}
+            onPress={handleAddToCart}
+            disabled={(product.stock ?? 20) <= 0}>
             <IconSymbol name="cart.badge.plus" size={20} color="#fff" style={{ marginRight: 8 }} />
-            <Text style={styles.addToCartText}>ใส่ตะกร้า • ฿{currentPrice * quantity}</Text>
+            <Text style={styles.addToCartText}>
+              {(product.stock ?? 20) > 0 ? `ใส่ตะกร้า • ฿${currentPrice * quantity}` : 'สินค้าหมดคลัง'}
+            </Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -385,6 +534,111 @@ const styles = StyleSheet.create({
   },
   ingredientText: {
     fontSize: 13,
+  },
+  stockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  stockLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  stockBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+  },
+  stockBadgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  reviewFormCard: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  reviewFormTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  starSelectRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    gap: 8,
+  },
+  starBtnsRow: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  reviewInput: {
+    height: 70,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    fontSize: 13,
+    textAlignVertical: 'top',
+    marginBottom: 10,
+  },
+  submitReviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  submitReviewBtnText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  reviewsList: {
+    gap: 10,
+  },
+  reviewCard: {
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 10,
+  },
+  reviewUserCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#C92C2C',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reviewUserInitial: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  reviewUsername: {
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  reviewDate: {
+    fontSize: 11,
+  },
+  reviewStarsRow: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  reviewComment: {
+    fontSize: 13,
+    lineHeight: 18,
   },
   footer: {
     position: 'absolute',

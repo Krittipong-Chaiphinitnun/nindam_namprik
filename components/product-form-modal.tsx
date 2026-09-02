@@ -41,6 +41,7 @@ export default function ProductFormModal({ visible, product, loading, onClose, o
   const [name, setName] = useState('');
   const [thaiName, setThaiName] = useState('');
   const [price, setPrice] = useState('');
+  const [stock, setStock] = useState('20');
   const [category, setCategory] = useState<'dry' | 'wet' | 'crispy' | 'mild'>('wet');
   const [description, setDescription] = useState('');
   const [longDescription, setLongDescription] = useState('');
@@ -59,6 +60,7 @@ export default function ProductFormModal({ visible, product, loading, onClose, o
       setName(product.name);
       setThaiName(product.thaiName);
       setPrice(String(product.price));
+      setStock(String(product.stock ?? 20));
       setCategory(product.category);
       setDescription(product.description);
       setLongDescription(product.longDescription);
@@ -75,6 +77,7 @@ export default function ProductFormModal({ visible, product, loading, onClose, o
       setName('');
       setThaiName('');
       setPrice('');
+      setStock('20');
       setCategory('wet');
       setDescription('');
       setLongDescription('');
@@ -109,6 +112,7 @@ export default function ProductFormModal({ visible, product, loading, onClose, o
       name: (name || '').trim(),
       thai_name: (thaiName || '').trim(),
       price: parseFloat(price) || 0,
+      stock: parseInt(stock, 10) || 0,
       category,
       description: (description || '').trim(),
       long_description: (longDescription || '').trim(),
@@ -198,6 +202,19 @@ export default function ProductFormModal({ visible, product, loading, onClose, o
               value={price}
               onChangeText={setPrice}
               placeholder="89"
+              placeholderTextColor={c.icon}
+              keyboardType="numeric"
+            />
+          </View>
+
+          {/* Stock */}
+          <View style={styles.field}>
+            <Text style={labelStyle}>จำนวนสินค้าในคลัง (Stock) *</Text>
+            <TextInput
+              style={inputStyle}
+              value={stock}
+              onChangeText={setStock}
+              placeholder="20"
               placeholderTextColor={c.icon}
               keyboardType="numeric"
             />

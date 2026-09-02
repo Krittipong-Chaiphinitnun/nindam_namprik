@@ -40,6 +40,8 @@ export default function ProductsShowcaseScreen() {
 
   // Process list
   const filteredProducts = products.filter(product => {
+    const isAvailable = (product.stock ?? 20) > 0;
+
     const matchesSearch =
       product.thaiName.includes(searchQuery) ||
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -48,7 +50,7 @@ export default function ProductsShowcaseScreen() {
     const matchesCategory =
       selectedCategory === 'all' || product.category === selectedCategory;
 
-    return matchesSearch && matchesCategory;
+    return isAvailable && matchesSearch && matchesCategory;
   }).sort((a, b) => {
     if (sortBy === 'rating') return b.rating - a.rating;
     if (sortBy === 'priceAsc') return a.price - b.price;
