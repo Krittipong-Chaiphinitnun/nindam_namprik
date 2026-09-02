@@ -53,7 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async (username: string, password: string, role: string = 'user') => {
+  const register = async (username: string, password: string, role: string = 'customer') => {
     setLoading(true);
     try {
       const response = await fetch(`${AUTH_API_URL}/register`, {
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: JSON.stringify({ username, password, role }),
+        body: JSON.stringify({ username, password, role: role || 'customer' }),
       });
 
       const data = await response.json();

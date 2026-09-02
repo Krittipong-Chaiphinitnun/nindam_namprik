@@ -27,7 +27,6 @@ export default function RegisterScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'user' | 'admin'>('user');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -46,7 +45,7 @@ export default function RegisterScreen() {
     setErrorMessage('');
     setLoading(true);
 
-    const res = await register(username.trim(), password, role);
+    const res = await register(username.trim(), password, 'customer');
     setLoading(false);
 
     if (res.success) {
@@ -149,42 +148,6 @@ export default function RegisterScreen() {
                   onChangeText={setConfirmPassword}
                   autoCapitalize="none"
                 />
-              </View>
-            </View>
-
-            {/* Role Selection */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: themeColors.text }]}>สิทธิ์การใช้งาน (Role)</Text>
-              <View style={styles.roleContainer}>
-                <TouchableOpacity
-                  style={[
-                    styles.roleOption,
-                    {
-                      backgroundColor: role === 'user' ? themeColors.tint : themeColors.card,
-                      borderColor: role === 'user' ? themeColors.tint : themeColors.border,
-                    },
-                  ]}
-                  onPress={() => setRole('user')}>
-                  <IconSymbol name="person.fill" size={16} color={role === 'user' ? '#fff' : themeColors.text} />
-                  <Text style={[styles.roleText, { color: role === 'user' ? '#fff' : themeColors.text }]}>
-                    ผู้ใช้งาน (User)
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.roleOption,
-                    {
-                      backgroundColor: role === 'admin' ? themeColors.tint : themeColors.card,
-                      borderColor: role === 'admin' ? themeColors.tint : themeColors.border,
-                    },
-                  ]}
-                  onPress={() => setRole('admin')}>
-                  <IconSymbol name="gearshape.fill" size={16} color={role === 'admin' ? '#fff' : themeColors.text} />
-                  <Text style={[styles.roleText, { color: role === 'admin' ? '#fff' : themeColors.text }]}>
-                    ผู้ดูแลระบบ (Admin)
-                  </Text>
-                </TouchableOpacity>
               </View>
             </View>
 
@@ -298,24 +261,6 @@ const styles = StyleSheet.create({
   },
   eyeBtn: {
     padding: 6,
-  },
-  roleContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  roleOption: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 8,
-  },
-  roleText: {
-    fontSize: 13,
-    fontWeight: 'bold',
   },
   submitBtn: {
     height: 52,

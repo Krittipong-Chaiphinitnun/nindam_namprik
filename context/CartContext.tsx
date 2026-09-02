@@ -34,19 +34,36 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [promoDiscount, setPromoDiscount] = useState<number>(0);
 
   // Quick delivery calculation: free over 300 THB, else 40 THB
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const subtotal = cartItems.reduce(
+    (sum, item) => sum + (Number(item?.price) || 0) * (Number(item?.quantity) || 1),
+    0
+  );
   const deliveryFee = subtotal > 300 || subtotal === 0 ? 0 : 40;
 
-  const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);
+  const cartCount = cartItems.reduce(
+    (count, item) => count + (Number(item?.quantity) || 0),
+    0
+  );
   const cartTotal = Math.max(0, subtotal + deliveryFee - promoDiscount);
 
-  const addToCart = (product: Product, quantity: number, weight: string) => {
-    const weightOpt = product.weightOptions.find(o => o.label === weight) || product.weightOptions[0];
-    const unitPrice = weightOpt.price;
+  const addToCart = (product: Product, quantity: number = 1, weight: string = '') => {
+    // 🛡️ Guard Clause: Check if product object exists
+    if (!product || !product.id) {
+      console.warn('addToCart cancelled: invalid product object', product);
+      return;
+    }
+
+    // Support both price and product_price fields
+    const basePrice = Number(product.price ?? (product as any).product_price ?? 0);
+
+    // Safely resolve weight option price
+    const weightOpt = product.weightOptions?.find(o => o.label === weight) || product.weightOptions?.[0];
+    const unitPrice = weightOpt ? Number(weightOpt.price ?? basePrice) : basePrice;
+    const selectedWeight = weight || weightOpt?.label || 'ขนาดมาตรฐาน';
 
     setCartItems(prev => {
       const existingIndex = prev.findIndex(
-        item => item.id === product.id && item.selectedWeight === weight
+        item => item?.id === product.id && item?.selectedWeight === selectedWeight
       );
 
       if (existingIndex > -1) {
@@ -57,14 +74,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         return [
           ...prev,
           {
-            id: product.id,
-            name: product.name,
-            thaiName: product.thaiName,
+            id: String(product.id),
+            name: product.name || product.thaiName || 'สินค้า',
+            thaiName: product.thaiName || product.name || 'สินค้า',
             price: unitPrice,
-            quantity,
-            selectedWeight: weight,
-            image: product.image,
-            spicyLevel: product.spicyLevel,
+            quantity: quantity || 1,
+            selectedWeight: selectedWeight,
+            image: product.image || '',
+            spicyLevel: product.spicyLevel ?? 0,
           },
         ];
       }

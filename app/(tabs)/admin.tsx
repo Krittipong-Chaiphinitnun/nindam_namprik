@@ -12,12 +12,14 @@ import {
   Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Product } from '@/constants/products';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useProducts } from '@/hooks/use-products';
 import { useProductMutations, ProductPayload } from '@/hooks/use-product-mutations';
+import { useAuth } from '@/context/AuthContext';
 import ProductFormModal from '@/components/product-form-modal';
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -28,8 +30,10 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default function AdminScreen() {
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const c = Colors[colorScheme ?? 'light'];
+  const { user, isLoggedIn } = useAuth();
 
   const { products, loading: productsLoading, error: productsError, refetch } = useProducts();
   const { loading: mutLoading, createProduct, updateProduct, deleteProduct } = useProductMutations();
@@ -180,6 +184,33 @@ export default function AdminScreen() {
     </View>
   );
 
+  // 🔒 Guard: อนุญาตเฉพาะผู้ใช้งานที่มี role === 'admin' เท่านั้นที่เข้าถึงระบบจัดการได้
+  if (!isLoggedIn || user?.role !== 'admin') {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: c.background }]}>
+        <View style={styles.accessDeniedContainer}>
+          <View style={[styles.iconCircle, { backgroundColor: 'rgba(201, 44, 44, 0.1)' }]}>
+            <IconSymbol name="lock.fill" size={48} color={c.tint} />
+          </View>
+          <Text style={[styles.deniedTitle, { color: c.text }]}>สงวนสิทธิ์เฉพาะผู้ดูแลระบบ (Admin)</Text>
+          <Text style={[styles.deniedSub, { color: c.icon }]}>
+            {!isLoggedIn
+              ? 'กรุณาเข้าสู่ระบบด้วยบัญชีผู้ดูแลระบบ เพื่อเข้าใช้งานระบบจัดการสินค้า'
+              : `บัญชีปัจจุบันของคุณ (${user?.username} - Role: ${user?.role}) ไม่มีสิทธิ์เข้าถึงส่วนนี้`}
+          </Text>
+          <TouchableOpacity
+            style={[styles.loginRedirectBtn, { backgroundColor: c.tint }]}
+            onPress={() => router.push('/login' as any)}>
+            <IconSymbol name="person.fill" size={18} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={styles.loginRedirectBtnText}>
+              {!isLoggedIn ? 'เข้าสู่ระบบ Admin' : 'สลับบัญชีเข้าสู่ระบบ'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: c.background }]}>
       {/* Header */}
@@ -277,6 +308,44 @@ export default function AdminScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  accessDeniedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    gap: 12,
+  },
+  iconCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  deniedTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  deniedSub: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  loginRedirectBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 24,
+  },
+  loginRedirectBtnText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

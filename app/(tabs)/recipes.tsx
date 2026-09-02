@@ -97,7 +97,9 @@ export default function RecipesScreen() {
           <View
             key={recipe.id}
             style={[styles.recipeCard, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
-            <Image source={{ uri: recipe.image }} style={styles.recipeImage} contentFit="cover" />
+            <View style={styles.recipeImageContainer}>
+              <Image source={{ uri: recipe.image }} style={styles.recipeImage} contentFit="cover" />
+            </View>
 
             <View style={styles.recipeContent}>
               <Text style={[styles.recipeTitle, { color: themeColors.text }]}>{recipe.title}</Text>
@@ -175,10 +177,20 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     overflow: 'hidden',
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 600,
+  },
+  recipeImageContainer: {
+    width: '100%',
+    alignSelf: 'center',
   },
   recipeImage: {
     width: '100%',
-    height: 160,
+    height: 240,
+    maxHeight: 300,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   recipeContent: {
     padding: 16,

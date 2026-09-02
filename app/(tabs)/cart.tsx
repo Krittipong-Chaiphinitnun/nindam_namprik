@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, View, Text, TextInput, TouchableOpacity, Platform } from 'react-native';
+import { StyleSheet, ScrollView, View, Text, TextInput, TouchableOpacity, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -7,11 +7,13 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useCart, CartItem } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CartScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
+  const { isLoggedIn } = useAuth();
 
   const {
     cartItems,
@@ -28,6 +30,20 @@ export default function CartScreen() {
   const [promoMessage, setPromoMessage] = useState<{ text: string; success: boolean } | null>(null);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const handleCheckout = () => {
+    if (!isLoggedIn) {
+      const alertMsg = 'กรุณาเข้าสู่ระบบก่อนทำการสั่งซื้อ';
+      if (Platform.OS === 'web') {
+        window.alert(alertMsg);
+      } else {
+        Alert.alert('🔒 กรุณาเข้าสู่ระบบ', alertMsg);
+      }
+      router.push('/login' as any);
+      return;
+    }
+    router.push('/checkout' as any);
+  };
 
   const handleApplyPromo = () => {
     if (!promoInput.trim()) return;
@@ -183,7 +199,7 @@ export default function CartScreen() {
         </View>
         <TouchableOpacity
           style={[styles.checkoutBtn, { backgroundColor: themeColors.tint }]}
-          onPress={() => router.push('/checkout' as any)}>
+          onPress={handleCheckout}>
           <Text style={styles.checkoutBtnText}>ชำระเงินเลย</Text>
         </TouchableOpacity>
       </View>

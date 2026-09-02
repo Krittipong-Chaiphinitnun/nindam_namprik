@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, View, Text, TouchableOpacity, Dimensions, Platform, ActivityIndicator } from 'react-native';
+import { StyleSheet, ScrollView, View, Text, TouchableOpacity, Dimensions, Platform, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -9,6 +9,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useCart } from '@/context/CartContext';
 import { useProducts } from '@/hooks/use-products';
+import { useAuth } from '@/context/AuthContext';
 
 const { width } = Dimensions.get('window');
 
@@ -19,6 +20,7 @@ export default function ProductDetailScreen() {
   const themeColors = Colors[colorScheme ?? 'light'];
   const { addToCart } = useCart();
   const { products, loading, error, refetch } = useProducts();
+  const { isLoggedIn } = useAuth();
 
   const product = products.find(p => p.id === id);
   const [selectedWeight, setSelectedWeight] = useState(product?.weightOptions[0]?.label || '');
@@ -62,12 +64,37 @@ export default function ProductDetailScreen() {
     );
   }
 
-  const selectedOption = product.weightOptions?.find(o => o.label === selectedWeight) || product.weightOptions?.[0] || { label: 'ขนาดมาตรฐาน', price: product.price };
-  const currentPrice = selectedOption.price;
+  const basePrice = Number(product.price ?? (product as any).product_price ?? 0);
+  const selectedOption = product.weightOptions?.find(o => o.label === selectedWeight) ||
+    product.weightOptions?.[0] || { label: 'ขนาดมาตรฐาน', price: basePrice };
+  const currentPrice = Number(selectedOption?.price ?? basePrice);
 
   const handleAddToCart = () => {
-    addToCart(product, quantity, selectedWeight);
-    alert(`เพิ่ม "${product.thaiName} (${selectedWeight})" เข้าตะกร้าแล้ว!`);
+    if (!product || !product.id) {
+      const errorMsg = 'ไม่พบข้อมูลสินค้าที่ต้องการเพิ่ม';
+      Platform.OS === 'web' ? window.alert(errorMsg) : Alert.alert('❌ ผิดพลาด', errorMsg);
+      return;
+    }
+
+    if (!isLoggedIn) {
+      const alertMsg = 'กรุณาเข้าสู่ระบบก่อนทำการสั่งซื้อ';
+      if (Platform.OS === 'web') {
+        window.alert(alertMsg);
+      } else {
+        Alert.alert('🔒 กรุณาเข้าสู่ระบบ', alertMsg);
+      }
+      router.push('/login' as any);
+      return;
+    }
+
+    const weightToUse = selectedWeight || selectedOption.label || 'ขนาดมาตรฐาน';
+    addToCart(product, quantity, weightToUse);
+    const msg = `เพิ่ม "${product.thaiName || product.name || 'สินค้า'} (${weightToUse})" เข้าตะกร้าแล้ว!`;
+    if (Platform.OS === 'web') {
+      window.alert(msg);
+    } else {
+      Alert.alert('✅ สำเร็จ', msg);
+    }
   };
 
   const renderSpiceLevel = () => {
@@ -100,8 +127,10 @@ export default function ProductDetailScreen() {
       </SafeAreaView>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Product Image */}
-        <Image source={{ uri: product.image }} style={styles.image} contentFit="cover" />
+        {/* Product Image Container */}
+        <View style={styles.imageContainer}>
+          <Image source={{ uri: product.image }} style={styles.image} contentFit="cover" />
+        </View>
 
         <View style={styles.detailsContainer}>
           {/* Title & Thai Name */}
@@ -245,9 +274,19 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 100,
   },
+  imageContainer: {
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 600,
+    paddingHorizontal: 16,
+    marginTop: 12,
+  },
   image: {
-    width: width,
-    height: width * 0.8,
+    width: '100%',
+    height: 300,
+    maxHeight: 350,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   detailsContainer: {
     padding: 16,

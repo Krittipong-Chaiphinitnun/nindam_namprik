@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, ScrollView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 
 export default function CheckoutScreen() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
+  const { isLoggedIn } = useAuth();
 
   const { cartItems, cartTotal, deliveryFee, promoDiscount, clearCart } = useCart();
 
@@ -23,16 +25,30 @@ export default function CheckoutScreen() {
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const handlePlaceOrder = () => {
+    if (!isLoggedIn) {
+      const alertMsg = 'กรุณาเข้าสู่ระบบก่อนทำการสั่งซื้อ';
+      if (Platform.OS === 'web') {
+        window.alert(alertMsg);
+      } else {
+        Alert.alert('🔒 กรุณาเข้าสู่ระบบ', alertMsg);
+      }
+      router.push('/login' as any);
+      return;
+    }
+
     if (!name.trim()) {
-      alert('กรุณากรอกชื่อผู้รับ');
+      const msg = 'กรุณากรอกชื่อผู้รับ';
+      Platform.OS === 'web' ? window.alert(msg) : Alert.alert('ข้อความเตือน', msg);
       return;
     }
     if (!phone.trim() || phone.trim().length < 9) {
-      alert('กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง');
+      const msg = 'กรุณากรอกเบอร์โทรศัพท์ที่ถูกต้อง';
+      Platform.OS === 'web' ? window.alert(msg) : Alert.alert('ข้อความเตือน', msg);
       return;
     }
     if (!address.trim()) {
-      alert('กรุณากรอกที่อยู่จัดส่ง');
+      const msg = 'กรุณากรอกที่อยู่จัดส่ง';
+      Platform.OS === 'web' ? window.alert(msg) : Alert.alert('ข้อความเตือน', msg);
       return;
     }
 
