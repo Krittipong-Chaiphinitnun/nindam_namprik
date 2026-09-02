@@ -3,10 +3,11 @@ import { Product } from '@/constants/products';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useProducts } from '@/hooks/use-products';
+import { useAuth } from '@/context/AuthContext';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { ActivityIndicator, Dimensions, FlatList, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, Dimensions, FlatList, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -16,6 +17,9 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const themeColors = Colors[colorScheme ?? 'light'];
   const { products, loading, error, refetch } = useProducts();
+  const { user, isLoggedIn, logout } = useAuth();
+
+  const [searchQuery, setSearchQuery] = useState('');
 
   const categories = [
     { id: 'all', name: 'ทั้งหมด', icon: 'bag.fill' },
@@ -24,7 +28,16 @@ export default function HomeScreen() {
     { id: 'crispy', name: 'กากหมู/กรอบ', icon: 'star.fill' },
   ];
 
-  const featuredProducts = products.slice(0, 3); // Top 3 featured items
+  // Filter products by searchQuery without altering original hook/fetch logic
+  const filteredProducts = searchQuery.trim() === ''
+    ? products
+    : products.filter(p =>
+        p.thaiName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+
+  const featuredProducts = searchQuery.trim() === '' ? filteredProducts.slice(0, 4) : filteredProducts;
 
   const renderProductItem = ({ item }: { item: Product }) => (
     <TouchableOpacity
@@ -86,13 +99,47 @@ export default function HomeScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: themeColors.background }]}>
       {/* Top Welcome Bar */}
       <View style={styles.headerBar}>
-        <View>
-          <Text style={[styles.welcomeSub, { color: themeColors.icon }]}>สวัสดีความแซ่บ 👋</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.welcomeSub, { color: themeColors.icon }]}>
+            {isLoggedIn ? `สวัสดีคุณ ${user?.username} (${user?.role}) 👋` : 'สวัสดีความแซ่บ 👋'}
+          </Text>
           <Text style={[styles.welcomeTitle, { color: themeColors.text }]}>น้ำพริกคุณน้าสูตรโบราณ</Text>
         </View>
-        <TouchableOpacity style={[styles.cartIconBtn, { backgroundColor: themeColors.card }]} onPress={() => router.push('/(tabs)/cart' as any)}>
-          <IconSymbol name="cart.fill" size={20} color={themeColors.tint} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          {isLoggedIn ? (
+            <TouchableOpacity style={[styles.authHeaderBtn, { backgroundColor: 'rgba(255, 77, 77, 0.1)' }]} onPress={logout}>
+              <IconSymbol name="rectangle.portrait.and.arrow.right" size={16} color="#FF4D4D" />
+              <Text style={styles.logoutHeaderText}>ออก</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={[styles.authHeaderBtn, { backgroundColor: themeColors.tint }]} onPress={() => router.push('/login' as any)}>
+              <IconSymbol name="person.fill" size={16} color="#fff" />
+              <Text style={styles.loginHeaderText}>เข้าสู่ระบบ</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={[styles.cartIconBtn, { backgroundColor: themeColors.card }]} onPress={() => router.push('/(tabs)/cart' as any)}>
+            <IconSymbol name="cart.fill" size={20} color={themeColors.tint} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchSection}>
+        <View style={[styles.searchBar, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}>
+          <IconSymbol name="magnifyingglass" size={18} color={themeColors.icon} style={{ marginRight: 8 }} />
+          <TextInput
+            placeholder="ค้นหาน้ำพริก..."
+            placeholderTextColor={themeColors.icon}
+            style={[styles.searchInput, { color: themeColors.text }]}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery !== '' && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Text style={{ color: themeColors.tint, fontWeight: 'bold', fontSize: 12 }}>ล้าง</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
@@ -203,7 +250,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingTop: Platform.OS === 'ios' ? 10 : 20,
-    paddingBottom: 12,
+    paddingBottom: 8,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  authHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  loginHeaderText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  logoutHeaderText: {
+    color: '#FF4D4D',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  searchSection: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    height: 42,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    paddingVertical: 6,
   },
   welcomeSub: {
     fontSize: 13,

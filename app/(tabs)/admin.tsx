@@ -4,6 +4,7 @@ import {
   View,
   Text,
   FlatList,
+  TextInput,
   TouchableOpacity,
   Platform,
   ActivityIndicator,
@@ -35,6 +36,16 @@ export default function AdminScreen() {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter products by search query without changing CRUD hooks
+  const filteredProducts = searchQuery.trim() === ''
+    ? products
+    : products.filter(p =>
+        p.thaiName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
   const openAdd = () => {
     setEditingProduct(null);
@@ -176,7 +187,7 @@ export default function AdminScreen() {
         <View>
           <Text style={[styles.headerTitle, { color: c.text }]}>⚙️ จัดการสินค้า</Text>
           <Text style={[styles.headerSub, { color: c.icon }]}>
-            {productsLoading ? 'กำลังโหลด...' : `สินค้าทั้งหมด ${products.length} รายการ`}
+            {productsLoading ? 'กำลังโหลด...' : `สินค้าทั้งหมด ${filteredProducts.length} รายการ (จาก ${products.length})`}
           </Text>
         </View>
         <TouchableOpacity
@@ -185,6 +196,25 @@ export default function AdminScreen() {
           <IconSymbol name="plus" size={18} color="#fff" />
           <Text style={styles.addBtnText}>เพิ่มสินค้า</Text>
         </TouchableOpacity>
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchSection}>
+        <View style={[styles.searchBar, { backgroundColor: c.card, borderColor: c.border }]}>
+          <IconSymbol name="magnifyingglass" size={18} color={c.icon} style={{ marginRight: 8 }} />
+          <TextInput
+            placeholder="ค้นหาน้ำพริกที่ต้องการจัดการ..."
+            placeholderTextColor={c.icon}
+            style={[styles.searchInput, { color: c.text }]}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery !== '' && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Text style={{ color: c.tint, fontWeight: 'bold', fontSize: 12 }}>ล้าง</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Body */}
@@ -204,7 +234,7 @@ export default function AdminScreen() {
         </View>
       ) : (
         <FlatList
-          data={products}
+          data={filteredProducts}
           renderItem={renderItem}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.list}
@@ -212,8 +242,12 @@ export default function AdminScreen() {
           ListEmptyComponent={
             <View style={styles.center}>
               <Text style={{ fontSize: 40 }}>📦</Text>
-              <Text style={[styles.centerText, { color: c.icon }]}>ยังไม่มีสินค้า</Text>
-              <Text style={[{ color: c.icon, fontSize: 13 }]}>กดปุ่ม "เพิ่มสินค้า" เพื่อเริ่มต้น</Text>
+              <Text style={[styles.centerText, { color: c.icon }]}>
+                {searchQuery ? 'ไม่พบสินค้าที่ตรงกับการค้นหา' : 'ยังไม่มีสินค้า'}
+              </Text>
+              <Text style={[{ color: c.icon, fontSize: 13 }]}>
+                {searchQuery ? 'ลองค้นหาด้วยคำอื่น' : 'กดปุ่ม "เพิ่มสินค้า" เพื่อเริ่มต้น'}
+              </Text>
             </View>
           }
         />
@@ -251,6 +285,24 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 10 : 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
+  },
+  searchSection: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    height: 42,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    paddingVertical: 6,
   },
   headerTitle: {
     fontSize: 20,
